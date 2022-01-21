@@ -19,7 +19,7 @@ slack_event_adapter = SlackEventAdapter(os.environ["SIGNING_SECRET"],"/slack/eve
 
 client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
 
-client.chat_postMessage(channel="#jurabot-testing", text="JuraBot has reconnected")
+client.chat_postMessage(channel="#coffee_machine", text="JuraBot has reconnected")
 BOT_ID = client.api_call("auth.test")["user_id"]
 
 # Report machine was cleaned with /cleaned
@@ -162,15 +162,15 @@ def checkTime():
         sortRecWeek = sorted(recordWeek, key=lambda x: (recordWeek[x]["score"]), reverse=True)
         jfileWeek.close()
         
-        client.chat_postMessage(channel="#jurabot-testing", text=f"🗓️ It's Sunday 😴: Weekly leaderboard placement 🥇🥈🥉 ")
+        client.chat_postMessage(channel="#coffee_machine", text=f"🗓️ It's Sunday 😴: Weekly leaderboard placement 🥇🥈🥉 ")
         for i in sortRecWeek:
-            client.chat_postMessage(channel="#jurabot-testing", text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
+            client.chat_postMessage(channel="#coffee_machine", text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
 
 
 
         weekJsons = glob.glob("*_week.json")
         os.remove(weekJsons[0])
-        client.chat_postMessage(channel="#jurabot-testing", text=f"Leaderboard reset...💣💥")
+        client.chat_postMessage(channel="#coffee_machine", text=f"Leaderboard reset...💣💥")
         
 
 checkTime()
