@@ -3,7 +3,6 @@ import os
 import json
 import threading
 import glob
-import pandas as pd
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
