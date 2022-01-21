@@ -101,32 +101,37 @@ def leaderboard():
     print("User_id = "+user_id)
     channel_id = data.get("channel_id")
 
-    jfile = open("./"+team_id+".json",)
-    jfileWeek = open("./"+team_id+"_week.json",)
-    record = json.load(jfile)
-    recordWeek = json.load(jfileWeek)
 
-    sortRec = sorted(record, key=lambda x: (record[x]["score"]), reverse=True)
-    sortRecWeek = sorted(recordWeek, key=lambda x: (record[x]["score"]), reverse=True)
-
-    if (user_id in record):
-        client.chat_postMessage(channel=channel_id, text=f'You have {record[user_id]["score"]} points overall')
+    if os.path.exists("./"+team_id+".json"):
+        jfile = open("./"+team_id+".json",)
+        record = json.load(jfile)
+        if (user_id in record):
+            client.chat_postMessage(channel=channel_id, text=f'You have {record[user_id]["score"]} points overall')
+        else:
+            client.chat_postMessage(channel=channel_id, text=f'You have no points. Maybe clean the coffee machine once?')
+        
+        sortRec = sorted(record, key=lambda x: (record[x]["score"]), reverse=True)
+        client.chat_postMessage(channel=channel_id, text=f'🥉🥈🥇 Overall leaderboard (top 10 only) 🥇🥈🥉')
+        c = 0
+        for i in sortRec:
+            if c > 9: break
+            client.chat_postMessage(channel=channel_id, text=f'{record[i]["user_name"]}: {record[i]["score"]} points')
+            c += 1
     else:
-        client.chat_postMessage(channel=channel_id, text=f'You have no points. Maybe clean the coffee machine once?')
-    if (user_id in recordWeek):
-        client.chat_postMessage(channel=channel_id, text=f'You have {recordWeek[user_id]["score"]} points this week')
+        client.chat_postMessage(channel=channel_id, text=f'No overall records yet...')
 
+    if os.path.exists("./"+team_id+"_week.json"):
+        jfileWeek = open("./"+team_id+"_week.json",)
+        recordWeek = json.load(jfileWeek)
+        if (user_id in recordWeek):
+            client.chat_postMessage(channel=channel_id, text=f'You have {recordWeek[user_id]["score"]} points this week')
 
-    client.chat_postMessage(channel=channel_id, text=f'🏆 Weekly leaderboard 🏆')
-    for i in sortRecWeek:
-        client.chat_postMessage(channel=channel_id, text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
-
-    client.chat_postMessage(channel=channel_id, text=f'🥉🥈🥇 Overall leaderboard (top 10 only) 🥇🥈🥉')
-    c = 0
-    for i in sortRec:
-        if c > 9: break
-        client.chat_postMessage(channel=channel_id, text=f'{record[i]["user_name"]}: {record[i]["score"]} points')
-        c += 1
+        sortRecWeek = sorted(recordWeek, key=lambda x: (record[x]["score"]), reverse=True)
+        client.chat_postMessage(channel=channel_id, text=f'🏆 Weekly leaderboard 🏆')
+        for i in sortRecWeek:
+            client.chat_postMessage(channel=channel_id, text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
+    else:
+        client.chat_postMessage(channel=channel_id, text=f'No week records yet...')
 
     return Response(), 200
 
