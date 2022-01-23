@@ -3,6 +3,7 @@ import os
 import json
 import threading
 import glob
+import calendar
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -19,6 +20,10 @@ slack_event_adapter = SlackEventAdapter(os.environ["SIGNING_SECRET"],"/slack/eve
 client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
 
 client.chat_postMessage(channel="#coffee_machine", text="JuraBot has restarted")
+
+# Check if the hourly message has been sent yet
+sent = False
+
 BOT_ID = client.api_call("auth.test")["user_id"]
 
 # Report machine was cleaned with /cleaned
@@ -48,20 +53,20 @@ def cleaned():
         jfile = open("./"+team_id+".json")
         record = json.load(jfile)
     
-    # Check if the week record exsists, if not create one
-    if os.path.exists("./"+team_id+"_week.json")==False:
-        jfileWeek = open("./"+team_id+"_week.json", "x")
-        recordWeek = {user_id:{"score" : 0, "user_name" : user_name}}
-    elif os.stat("./"+team_id+"_week.json").st_size == 0:
+    # Check if the month record exsists, if not create one
+    if os.path.exists("./"+team_id+"_month.json")==False:
+        jfileMonth = open("./"+team_id+"_month.json", "x")
+        recordMonth = {user_id:{"score" : 0, "user_name" : user_name}}
+    elif os.stat("./"+team_id+"_month.json").st_size == 0:
         print("File empty, deleting and remaking...")
-        os.remove("./"+team_id+"_week.json")
-        jfile = open("./"+team_id+"_week.json", "x")
+        os.remove("./"+team_id+"_month.json")
+        jfile = open("./"+team_id+"_month.json", "x")
         record = {user_id:{"score" : 0, "user_name" : user_name}}
     else:
         # If json exists, load the json
-        print("Opening week score json...")
-        jfileWeek = open("./"+team_id+"_week.json")
-        recordWeek = json.load(jfileWeek)
+        print("Opening month score json...")
+        jfileMonth = open("./"+team_id+"_month.json")
+        recordMonth = json.load(jfileMonth)
 
     # If new user, add user id to the dictionary
     print(f"Is user in record: {user_id in record}")
@@ -70,24 +75,24 @@ def cleaned():
         tempDict = {user_id:{"score":0, "user_name" : user_name}}
         record.update(tempDict)
     
-    # For week record
-    print(f"Is user in weekly record: {user_id in recordWeek}")
-    if (user_id in recordWeek) == False:
-        print("New user, updating weekly record...")
+    # For month record
+    print(f"Is user in monthly record: {user_id in recordMonth}")
+    if (user_id in recordMonth) == False:
+        print("New user, updating monthly record...")
         tempDict = {user_id:{"score":0, "user_name" : user_name}}
-        recordWeek.update(tempDict)
+        recordMonth.update(tempDict)
 
     print(f"Increasing {user_id}'s score by 1...")
     record[user_id]["score"] += 1
-    recordWeek[user_id]["score"] += 1
+    recordMonth[user_id]["score"] += 1
 
-    client.chat_postMessage(channel=channel_id, text=f'🧽➡️☕🤖 Jura Garbage Collection completed by {user_name} at {datetime.now().strftime("%H:%M")}')
-    client.chat_postMessage(channel=channel_id, text=f"{user_name}'s cleaning 💦🧼 score is now: {record[user_id]['score']} overall, {recordWeek[user_id]['score']} for the week 🎉")
+    client.chat_postMessage(channel=channel_id, text=f'Jura Garbage Collection 🧽➡️☕🤖 completed by {user_name} at {datetime.now().strftime("%H:%M")}')
+    client.chat_postMessage(channel=channel_id, text=f"{user_name}'s cleaning 💦🧼 score is now: {record[user_id]['score']} overall, {recordMonth[user_id]['score']} for the month 🎉")
 
 
     print("Updating JSON files...")
     json.dump(record, open("./"+team_id+".json","w"))
-    json.dump(recordWeek, open("./"+team_id+"_week.json","w"))
+    json.dump(recordMonth, open("./"+team_id+"_month.json","w"))
 
     return Response(), 200
 
@@ -108,7 +113,7 @@ def leaderboard():
         if (user_id in record):
             client.chat_postMessage(channel=channel_id, text=f'You have {record[user_id]["score"]} points overall')
         else:
-            client.chat_postMessage(channel=channel_id, text=f'You have no points. Maybe clean the coffee machine once?')
+            client.chat_postMessage(channel=channel_id, text=f'<@{user_id}>, you have no points. Maybe clean the coffee machine once?')
         
         sortRec = sorted(record, key=lambda x: (record[x]["score"]), reverse=True)
         client.chat_postMessage(channel=channel_id, text=f'🥉🥈🥇 Overall leaderboard (top 10 only) 🥇🥈🥉')
@@ -120,18 +125,18 @@ def leaderboard():
     else:
         client.chat_postMessage(channel=channel_id, text=f'No overall records yet...')
 
-    if os.path.exists("./"+team_id+"_week.json"):
-        jfileWeek = open("./"+team_id+"_week.json",)
-        recordWeek = json.load(jfileWeek)
-        if (user_id in recordWeek):
-            client.chat_postMessage(channel=channel_id, text=f'You have {recordWeek[user_id]["score"]} points this week')
+    if os.path.exists("./"+team_id+"_month.json"):
+        jfileMonth = open("./"+team_id+"_month.json",)
+        recordMonth = json.load(jfileMonth)
+        if (user_id in recordMonth):
+            client.chat_postMessage(channel=channel_id, text=f'You have {recordMonth[user_id]["score"]} points this month')
 
-        sortRecWeek = sorted(recordWeek, key=lambda x: (record[x]["score"]), reverse=True)
-        client.chat_postMessage(channel=channel_id, text=f'🏆 Weekly leaderboard 🏆')
-        for i in sortRecWeek:
-            client.chat_postMessage(channel=channel_id, text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
+        sortRecMonth = sorted(recordMonth, key=lambda x: (record[x]["score"]), reverse=True)
+        client.chat_postMessage(channel=channel_id, text=f'🏆 Monthly leaderboard 🏆')
+        for i in sortRecMonth:
+            client.chat_postMessage(channel=channel_id, text=f'{recordMonth[i]["user_name"]}: {recordMonth[i]["score"]} points')
     else:
-        client.chat_postMessage(channel=channel_id, text=f'No week records yet...')
+        client.chat_postMessage(channel=channel_id, text=f'No month records yet...')
 
     return Response(), 200
 
@@ -145,35 +150,42 @@ def milk():
     client.chat_postMessage(channel=channel_id, text=f'<!channel> ☕🤖 JuraBot 🚫 OOM Error 🚨: Out Of Milk 🥛 🐮')
     return Response(), 200
 
-
 def checkTime():
-    # Checks the day once a day
-    threading.Timer(86400, checkTime).start()
+    global sent
+    # Checks the day once an hour
+    threading.Timer(3600, checkTime).start()
 
-    day = datetime.today().weekday()
+    now = datetime.now()
+
+    daysInMonth = calendar.monthrange(now.year, now.month)[1]
 
     teamInfo = client.team_info()
     teamDetails = teamInfo.get("team")
     team_id = teamDetails.get("id")
 
-    # For testing:
-    # day = 6
+    if(sent == False):
+        if(now.day == daysInMonth & os.path.exists("./"+team_id+"_month.json") & now.hour == 17):  # Check last day of month, file exists, and is 5pm
+            jfileMonth = open("./"+team_id+"_month.json",)
+            recordMonth = json.load(jfileMonth)
+            sortRecMonth = sorted(recordMonth, key=lambda x: (recordMonth[x]["score"]), reverse=True)
+            jfileMonth.close()
+            
+            client.chat_postMessage(channel="#coffee_machine", text=f"<!channel> It's the end of the month leaderboard placement🏆")
+            # Print the winner
+            client.chat_postMessage(channel="#coffee_machine", text=f"🥇 Congratulations to {recordMonth[sortRecMonth[0]]['user_name']} for winning with {recordMonth[sortRecMonth[0]]['score']} points \n")
+            # Print the leaderboard
+            for i in sortRecMonth:
+                client.chat_postMessage(channel="#coffee_machine", text=f'{recordMonth[i]["user_name"]}: {recordMonth[i]["score"]} points')
 
-    # Day = 6 = Sunday: Post and reset weekly leaderboard on sunday
-    if(day == 6 & os.path.exists("./"+team_id+"_week.json")):  # check if matches with the desired time
-        jfileWeek = open("./"+team_id+"_week.json",)
-        recordWeek = json.load(jfileWeek)
-        sortRecWeek = sorted(recordWeek, key=lambda x: (recordWeek[x]["score"]), reverse=True)
-        jfileWeek.close()
-        
-        client.chat_postMessage(channel="#coffee_machine", text=f"🗓️ It's Sunday 😴: Weekly leaderboard placement 🥇🥈🥉 ")
-        for i in sortRecWeek:
-            client.chat_postMessage(channel="#coffee_machine", text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
+            monthJsons = glob.glob("*_month.json")
+            os.remove(monthJsons[0])
+            client.chat_postMessage(channel="#coffee_machine", text=f"Leaderboard reset...💣💥")
+            # Then set sent variable to True so message is only sent once
+            sent = True
 
-        weekJsons = glob.glob("*_week.json")
-        os.remove(weekJsons[0])
-        client.chat_postMessage(channel="#coffee_machine", text=f"Leaderboard reset...💣💥")
-        
+    # If time is past 5pm, reset the sent global variable
+    if(now.hour > 17):
+        sent = False
 
 checkTime()
 
