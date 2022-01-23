@@ -18,7 +18,7 @@ slack_event_adapter = SlackEventAdapter(os.environ["SIGNING_SECRET"],"/slack/eve
 
 client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
 
-client.chat_postMessage(channel="#coffee_machine", text="JuraBot has reconnected")
+client.chat_postMessage(channel="#coffee_machine", text="JuraBot has restarted")
 BOT_ID = client.api_call("auth.test")["user_id"]
 
 # Report machine was cleaned with /cleaned
