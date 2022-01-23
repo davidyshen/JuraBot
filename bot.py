@@ -160,7 +160,7 @@ def checkTime():
     # day = 6
 
     # Day = 6 = Sunday: Post and reset weekly leaderboard on sunday
-    if(day == 6):  # check if matches with the desired time
+    if(day == 6 & os.path.exists("./"+team_id+"_week.json")):  # check if matches with the desired time
         jfileWeek = open("./"+team_id+"_week.json",)
         recordWeek = json.load(jfileWeek)
         sortRecWeek = sorted(recordWeek, key=lambda x: (recordWeek[x]["score"]), reverse=True)
@@ -169,8 +169,6 @@ def checkTime():
         client.chat_postMessage(channel="#coffee_machine", text=f"🗓️ It's Sunday 😴: Weekly leaderboard placement 🥇🥈🥉 ")
         for i in sortRecWeek:
             client.chat_postMessage(channel="#coffee_machine", text=f'{recordWeek[i]["user_name"]}: {recordWeek[i]["score"]} points')
-
-
 
         weekJsons = glob.glob("*_week.json")
         os.remove(weekJsons[0])
