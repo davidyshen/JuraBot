@@ -111,7 +111,7 @@ def leaderboard():
         jfile = open("./"+team_id+".json",)
         record = json.load(jfile)
         if (user_id in record):
-            client.chat_postMessage(channel=channel_id, text=f'You have {record[user_id]["score"]} points overall')
+            client.chat_postMessage(channel=channel_id, text=f'{record[user_id]["user_name"]} has {record[user_id]["score"]} points overall')
         else:
             client.chat_postMessage(channel=channel_id, text=f'<@{user_id}>, you have no points. Maybe clean the coffee machine once?')
         
@@ -129,7 +129,7 @@ def leaderboard():
         jfileMonth = open("./"+team_id+"_month.json",)
         recordMonth = json.load(jfileMonth)
         if (user_id in recordMonth):
-            client.chat_postMessage(channel=channel_id, text=f'You have {recordMonth[user_id]["score"]} points this month')
+            client.chat_postMessage(channel=channel_id, text=f'{recordMonth[user_id]["user_name"]} has {recordMonth[user_id]["score"]} points this month')
 
         sortRecMonth = sorted(recordMonth, key=lambda x: (record[x]["score"]), reverse=True)
         client.chat_postMessage(channel=channel_id, text=f'🏆 Monthly leaderboard 🏆')
