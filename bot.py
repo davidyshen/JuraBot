@@ -4,6 +4,7 @@ import json
 import threading
 import glob
 import calendar
+import sys
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -19,7 +20,13 @@ slack_event_adapter = SlackEventAdapter(os.environ["SIGNING_SECRET"],"/slack/eve
 
 client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
 
-client.chat_postMessage(channel="#coffee_machine", text="JuraBot has restarted")
+now = datetime.now()
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == "d":  # d for deploy to coffee_machine channel
+        client.chat_postMessage(channel="#coffee_machine", text=f'JuraBot is back online at {now.strftime("%d/%m/%Y, %H:%M:%S")}')
+else:   # otherwise keep post messages to the testing channel
+    client.chat_postMessage(channel="#jurabot-testing", text=f'JuraBot has restarted at {now.strftime("%d/%m/%Y, %H:%M:%S")}')
 
 # Check if the hourly message has been sent yet
 sent = False
@@ -111,7 +118,7 @@ def leaderboard():
         jfile = open("./"+team_id+".json",)
         record = json.load(jfile)
         if (user_id in record):
-            client.chat_postMessage(channel=channel_id, text=f'{record[user_id]["user_name"]} has {record[user_id]["score"]} points overall')
+            client.chat_postMessage(channel=channel_id, text=f'{record[user_id]["user_name"]}, you have {record[user_id]["score"]} points overall')
         else:
             client.chat_postMessage(channel=channel_id, text=f'<@{user_id}>, you have no points. Maybe clean the coffee machine once?')
         
@@ -129,7 +136,7 @@ def leaderboard():
         jfileMonth = open("./"+team_id+"_month.json",)
         recordMonth = json.load(jfileMonth)
         if (user_id in recordMonth):
-            client.chat_postMessage(channel=channel_id, text=f'{recordMonth[user_id]["user_name"]} has {recordMonth[user_id]["score"]} points this month')
+            client.chat_postMessage(channel=channel_id, text=f'{recordMonth[user_id]["user_name"]}, you have {recordMonth[user_id]["score"]} points this month')
 
         sortRecMonth = sorted(recordMonth, key=lambda x: (record[x]["score"]), reverse=True)
         client.chat_postMessage(channel=channel_id, text=f'🏆 Monthly leaderboard 🏆')
@@ -150,7 +157,17 @@ def milk():
     client.chat_postMessage(channel=channel_id, text=f'<!channel> ☕🤖 JuraBot 🚫 OOM Error 🚨: Out Of Milk 🥛 🐮')
     return Response(), 200
 
-def checkTime():
+# Alert people out of milk
+@app.route("/milked", methods = ["POST"])
+def milked():
+    data = request.form
+    print(data)
+    channel_id = data.get("channel_id")
+
+    client.chat_postMessage(channel=channel_id, text=f'JuraBot has been (re)milked 🍼')
+    return Response(), 200
+
+# def checkTime():
     global sent
     # Checks the day once an hour
     threading.Timer(3600, checkTime).start()
@@ -187,7 +204,12 @@ def checkTime():
     if(now.hour > 17):
         sent = False
 
-checkTime()
+# checkTime()
+
+@app.route("/test", methods = ["GET"])
+def test():
+    client.chat_postMessage(channel="#jurabot-testing", text=f'Test')
+    return Response(), 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0')
