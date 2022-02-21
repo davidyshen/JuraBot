@@ -164,52 +164,32 @@ def milked():
     print(data)
     channel_id = data.get("channel_id")
 
-    client.chat_postMessage(channel=channel_id, text=f'JuraBot has been (re)milked 🍼')
+    client.chat_postMessage(channel=channel_id, text=f'Crisis averted: Milk replenished')
     return Response(), 200
 
-# def checkTime():
-    global sent
-    # Checks the day once an hour
-    threading.Timer(3600, checkTime).start()
-
-    now = datetime.now()
-
-    daysInMonth = calendar.monthrange(now.year, now.month)[1]
-
-    teamInfo = client.team_info()
-    teamDetails = teamInfo.get("team")
-    team_id = teamDetails.get("id")
-
-    if(sent == False):
-        if(now.day == daysInMonth & os.path.exists("./"+team_id+"_month.json") & now.hour == 17):  # Check last day of month, file exists, and is 5pm
-            jfileMonth = open("./"+team_id+"_month.json",)
-            recordMonth = json.load(jfileMonth)
-            sortRecMonth = sorted(recordMonth, key=lambda x: (recordMonth[x]["score"]), reverse=True)
-            jfileMonth.close()
-            
-            client.chat_postMessage(channel="#coffee_machine", text=f"<!channel> It's the end of the month leaderboard placement🏆")
-            # Print the winner
-            client.chat_postMessage(channel="#coffee_machine", text=f"🥇 Congratulations to {recordMonth[sortRecMonth[0]]['user_name']} for winning with {recordMonth[sortRecMonth[0]]['score']} points \n")
-            # Print the leaderboard
-            for i in sortRecMonth:
-                client.chat_postMessage(channel="#coffee_machine", text=f'{recordMonth[i]["user_name"]}: {recordMonth[i]["score"]} points')
-
-            monthJsons = glob.glob("*_month.json")
-            os.remove(monthJsons[0])
-            client.chat_postMessage(channel="#coffee_machine", text=f"Leaderboard reset...💣💥")
-            # Then set sent variable to True so message is only sent once
-            sent = True
-
-    # If time is past 5pm, reset the sent global variable
-    if(now.hour > 17):
-        sent = False
-
-# checkTime()
-
-@app.route("/test", methods = ["GET"])
-def test():
-    client.chat_postMessage(channel="#jurabot-testing", text=f'Test')
+@app.route("/r405", methods = ["GET"])
+def r405():
+    client.chat_postMessage(channel="C030BQPBNJC", text=f'<!channel> Your turn to service the coffee machine this week')
     return Response(), 200
+
+@app.route("/r301", methods = ["GET"])
+def r301():
+    client.chat_postMessage(channel="C02NRD9R4UF", text=f'<!channel> Your turn to service the coffee machine this week')
+
+    return Response(), 200
+
+# @app.route("/r414", methods = ["GET"])
+# def r414():
+#     client.chat_postMessage(channel="C02L9BB8GDA", text=f'Test')
+
+#     return Response(), 200
+
+# @app.route("/r450", methods = ["GET"])
+# def r450():
+#     client.chat_postMessage(channel="C02L9BB8GDA", text=f'Test')
+
+#     return Response(), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
+
